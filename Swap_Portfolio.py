@@ -1,22 +1,26 @@
-"""Portfolio swapowe:
+"""Swap Portfolio:
 
-1. Dodawanie nowych pozycji/usuwanie starych z ich parametrami: nogi, notional, maturity date payment frequency,
+1. Adding new positions/removing the old ones with its parameters: legs, notional, maturity date, payment frequency,
     accounting basis.
-2. Zmiania notionali istniejących pozycji (trading: buy/sell trade)
-3. Obliczanie zebranych odsetek dla każdej pozycji.
-4. Obliczanie daty wypłaty następnego kuponu/resetu."""
+2. Changing notional of given position (trading: buy/sell trade)
+3. Calculating accrued interest
+4. Calculating next coupon payment date"""
 
 
 class Leg:
-    def __init__(self, direction: str, rate_type: str, rate, notional: float, currency: str,
+    def __init__(self, rate_type: str, rate, notional: float, currency: str,
                  payment_frequency: str, accounting_basis: str):
-        self.direction = direction
         self.rate_type = rate_type
         self.rate = rate
         self.notional = notional
         self.currency = currency
         self.payment_frequency = payment_frequency
         self.accounting_basis = accounting_basis
+
+    def __str__(self):
+        return (f"Rate type: {self.rate_type}, Rate: {self.rate}, "
+                f"Notional: {self.notional}, Currency: {self.payment_frequency}, "
+                f"Accounting basis: {self.accounting_basis} ")
 
 
 class Swap:
@@ -26,19 +30,23 @@ class Swap:
         self.payable_leg = payable_leg
         self.maturity_date = maturity_date
 
+    def __str__(self):
+        return (
+            f"Swap ID: {self.swap_id}, ,Maturity date: {self.maturity_date}\n "
+            f"Receivable leg:\n\t {self.receivable_leg}\n "
+            f"Payable leg:\n\t {self.payable_leg} ")
+
 
 class Portfolio:
     def __init__(self):
-        self.swaps = {}
+        self.positions = []
 
-    def add_swap(self, swap):
-        self.swaps[swap.swap_id] = swap
+    def add_swap(self, position):
+        self.positions.append(position)
+        print("Position added successfully.")
 
     def __str__(self):
-        result = "PORTFOLIO\n"
-        for swap in self.swaps.values():
-            result += str(swap) + "\n"
-        return result
+        return "\n\n".join(str(pos) for pos in self.positions) #to fix: add header
 
 
 class InterestRateSwap(Swap):
@@ -60,10 +68,18 @@ class CreditDefaultSwap(Swap):
         self.maturity_date = maturity_date
 
 
-leg1_irs = Leg(direction="Pay", rate_type="fixed", rate=0.01, notional=100000, currency="USD",
+leg1_irs = Leg(rate_type="fixed", rate=0.01, notional=100000, currency="USD",
                payment_frequency="03M", accounting_basis="ACT/360")
-leg2_irs = Leg(direction="Rec", rate_type="floating", rate="FEDL", notional=100000, currency="USD",
+leg2_irs = Leg(rate_type="floating", rate="SOFR", notional=100000, currency="USD",
                payment_frequency="03M", accounting_basis="ACT/360")
 swap1_irs = Swap(maturity_date=20270620, payable_leg=leg1_irs, receivable_leg=leg2_irs, swap_id="IRS001")
 
-print(Portfolio)
+leg1_cds = Leg("Event", 0, 520000, "EUR", "03M", "30/365")
+leg2_cds = Leg("Fixed", 0.05, 52000, "EUR", "03M", "act/360")
+
+swap1_cds = Swap("CDS001", leg2_cds, leg1_cds, 202560920)
+
+portfolio = Portfolio()
+portfolio.add_swap(swap1_irs)
+portfolio.add_swap(swap1_cds)
+print(portfolio)
